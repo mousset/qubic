@@ -1,0 +1,50 @@
+---
+jupyter:
+  jupytext:
+    text_representation:
+      extension: .Rmd
+      format_name: rmarkdown
+      format_version: '1.1'
+      jupytext_version: 1.1.5
+  kernelspec:
+    display_name: Python 2
+    language: python
+    name: python2
+---
+
+```{python}
+from qubicpack import qubicpack as qp
+a = qp() 
+a.read_qubicstudio_dataset('/home/james/qubicdata/2019-05-10_10.21.56__RF_switch_cont_12_48')
+#a.read_qubicstudio_dataset('/home/james/TDCalibData/Calib-TD/2019-05-27/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0/')
+a.hk.keys()
+
+```
+
+```{python}
+from qubicpack.qubicfp import qubicfp
+a = qubicfp()
+a.read_qubicstudio_dataset('/home/james/TDCalibData/Calib-TD/2019-05-27/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0')
+```
+
+```{python}
+a.plot_timeline_focalplane()
+```
+
+```{python}
+
+```
+
+```{python}
+from astropy.io import fits
+hdul = fits.open('/home/james/TDCalibData/Calib-TD/2019-05-27/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0/Sums/science-asic1-2019.05.27.184654.fits')
+hdul.info()
+hdul[1].header
+#data = hdul[1].data
+#print data.shape
+
+```
+
+```{python}
+
+```
