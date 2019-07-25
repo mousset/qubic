@@ -1,0 +1,103 @@
+---
+jupyter:
+  jupytext:
+    text_representation:
+      extension: .Rmd
+      format_name: rmarkdown
+      format_version: '1.1'
+      jupytext_version: 1.1.5
+  kernelspec:
+    display_name: Python 2
+    language: python
+    name: python2
+---
+
+```{python}
+from astropy.io import fits
+import matplotlib.pyplot as plt
+
+#load qubic science file
+#hdul = fits.open('/home/james/TDCalibData/Calib-TD/2019-05-27/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0/Sums/science-asic1-2019.05.27.184654.fits', memmap=True)
+hdul = fits.open('/home/james/TDCalibData/Calib-TD/2019-05-27/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0/Sums/science-asic2-2019.05.27.184654.fits', memmap=True)
+
+#select TOD data for reduction
+data = hdul[1].data
+
+print data.shape
+data = data[0:500]
+print data.shape
+hdul[1].data = data
+#plot reduced data
+plt.plot(data['GPSDate'], data['pixel93'], 'o-')
+#write data to new file
+hdul.writeto('temptestasic2.fits', overwrite=True)
+
+#hdunew=fits.PrimaryHDU(data)
+#hdulnew=fits.HDUList([hdunew])
+#hdulnew.header.extend(hdul[1].header, unique=True)
+#hdul.writeto('newhdutest.fits', overwrite=True)
+```
+
+```{python}
+from astropy.io import fits
+#test newly writen file by opening and checking headers etc.
+hdult = fits.open('temptestasic2.fits')
+hdult.info()
+#hdult[0].header
+hdult[1].header
+#cols = hdult[1].columns
+#cols.info()
+#cols.names
+```
+
+```{python}
+from qubicpack.qubicfp import qubicfp
+a = qubicfp()
+a.read_qubicstudio_dataset('/home/james/TDCalibData/Calib-TD/2019-05-27-redu/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0/')
+#a.read_qubicstudio_dataset('/home/james/TDCalibData/Calib-TD/2019-05-27/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0/')
+
+a.hk.keys()
+a.plot_timeline_focalplane()
+```
+
+```{python}
+#a.plot_timeline(93,1)
+#a.timeline_array(asic=1)
+#print a.asic_list[0].is_good_iv()
+import numpy as np
+print "pixel vals", a.asic_list[0].adu
+#print "vbias vals", a.asic_list[0].vbias
+print a.asic_list[0].adu.shape
+pixlen = len(a.asic_list[0].adu[:,0])
+print pixlen
+
+marr = np.empty(pixlen)
+for pix in range(pixlen):
+    marr = np.append(marr, np.mean(a.asic_list[0].adu[pix,:]))
+print marr
+
+from qubicpack.plot_fp import plot_fp
+args={}
+args['ASIC1']=a.asic_list[0].adu
+args['ASIC1 bg']=a.asic_list[0].turnover()
+args['ASIC1 good']=a.asic_list[0].is_good_iv()
+args['ASIC1 x-axis']=a.asic_list[0].vbias
+args['ASIC2']=a.asic_list[1].adu
+args['ASIC2 bg']=a.asic_list[1].turnover()
+args['ASIC2 good']=a.asic_list[1].is_good_iv()
+args['ASIC2 x-axis']=a.asic_list[1].vbias
+
+#plot_fp(args)
+
+```
+
+```{python}
+from qubicpack.pix2tes import tes2pix, assign_pix2tes
+tes2pix(93,1)
+pix2tes(93,1)
+assign_pix2tes()
+```
+
+```{python}
+
+```

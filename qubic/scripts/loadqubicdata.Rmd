@@ -14,7 +14,9 @@ jupyter:
 
 ```{python}
 from qubicpack import qubicpack as qp
-a = qp() 
+from qubicpack.qubicfp import qubicfp
+a = qubicfp()
+#a = qp() 
 a.read_qubicstudio_dataset('/home/james/qubicdata/2019-05-10_10.21.56__RF_switch_cont_12_48')
 #a.read_qubicstudio_dataset('/home/james/TDCalibData/Calib-TD/2019-05-27/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0/')
 a.hk.keys()
@@ -24,7 +26,7 @@ a.hk.keys()
 ```{python}
 from qubicpack.qubicfp import qubicfp
 a = qubicfp()
-a.read_qubicstudio_dataset('/home/james/TDCalibData/Calib-TD/2019-05-27/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0')
+a.read_qubicstudio_dataset('/home/james/TDCalibData/Calib-TD/2019-05-27/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0', asic=1)
 ```
 
 ```{python}
@@ -37,12 +39,88 @@ a.plot_timeline_focalplane()
 
 ```{python}
 from astropy.io import fits
+import numpy as np
 hdul = fits.open('/home/james/TDCalibData/Calib-TD/2019-05-27/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0/Sums/science-asic1-2019.05.27.184654.fits')
 hdul.info()
+hdul[0].header
 hdul[1].header
-#data = hdul[1].data
-#print data.shape
+hdul[1]
 
+cols = hdul[1].columns
+cols.info()
+
+data = hdul[1].data
+print data.shape, type(data)
+print data['pixel6'].shape, type(data['pixel6'])
+print min(data['pixel6']), max(data['pixel6']), np.mean(data['pixel6'])
+print data[6750398:6750399]
+
+data = data[0:10000]
+print data.shape
+
+#newdata=data
+#hdu = fits.BinTableHDU(data=newdata)
+#hdu.writeto('/home/james/fitsredu/asic1temp.fits')
+
+```
+
+```{python}
+print data.shape
+```
+
+```{python}
+from qubicpack.qubicfp import qubicfp
+a = qubicfp()
+a.read_qubicstudio_dataset('/home/james/TDCalibData/Calib-TD/2019-05-27-redu/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0/Sums/asic1temp.fits')
+a.plot_timeline_focalplane(dataset_name='CF')
+```
+
+```{python}
+from astropy.config import get_config_dir
+get_config_dir()
+```
+
+```{python}
+from astropy.io import fits
+import numpy as np
+hdul = fits.open('/home/james/TDCalibData/Calib-TD/2019-05-27/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0/Sums/science-asic1-2019.05.27.184654.fits', memmap=True)
+hdul.info()
+```
+
+```{python}
+hdul.close()
+del hdul[0].data
+```
+
+```{python}
+#hdul[0].header
+#hdul[1].header
+cols = hdul[1].columns
+#cols.info()
+#cols.names
+data = hdul[1].data
+print data.shape
+#data = data[4000000:4000010]
+data = data[0:100]
+print data.shape
+#data['pixel93'].size
+#data['pixel93'].mean()
+#data['GPSDate']
+#import matplotlib.pyplot as plt
+
+#plt.plot(data['GPSDate'], data['pixel93'], 'o-')
+hdul[1].data = hdul[1].data[0:200]
+#hdul.info()
+hdul[1].header
+```
+
+```{python}
+hdul.writeto('temptest.fits')
+```
+
+```{python}
+hdult = fits.open('temptest.fits')
+hdult.info()
 ```
 
 ```{python}

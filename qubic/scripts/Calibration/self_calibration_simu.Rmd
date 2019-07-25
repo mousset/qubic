@@ -26,16 +26,20 @@ One remark : I tried to put documentation for each function. On a jupyter notebo
 
 import glob
 import healpy as hp
-from matplotlib.pyplot import *
+import matplotlib.pyplot as plt
 import pandas as pd
 import cv2
+import numpy as np
 
 from qubicpack import qubicpack as qp
 from qubicpack import pix2tes
 from qubicpack.utilities import ASIC_index
 
+#import qubic
+import sys
+sys.path.insert(0,'/home/james/eclipse-workspace/qubiclmou2/qubic/')
+print sys.path
 import qubic
-
 import selfcal_lib
 ```
 
@@ -47,7 +51,8 @@ plt.rcParams['figure.figsize'] = (8, 8)
 useful for the qubicsoft
 
 ```{python}
-basedir = '/home/louisemousset/QUBIC/MyGitQUBIC'
+#basedir = '/home/louisemousset/QUBIC/MyGitQUBIC'
+basedir = '/home/james/eclipse-workspace/qubiclmou2/'
 dictfilename = basedir + '/qubic/qubic/scripts/global_source.dict'
 
 d = qubic.qubicdict.qubicDict()
@@ -58,6 +63,7 @@ d.read_from_file(dictfilename)
 
 ```{python}
 ca = selfcal_lib.SelfCalibration([12, 28], [], d)
+#ca = selfcal_lib.SelfCalibration(
 ```
 
 Look at method that are in this class :
@@ -93,7 +99,9 @@ power.shape
 ```
 
 ```{python}
-imshow(power[:,:,0])
+plt.figure()
+plt.imshow(power[:,:,0])
+plt.show();
 ```
 
 ## Directly the fringes for each TES
@@ -113,7 +121,10 @@ tes_fringes_signal
 
 ```{python}
 img = ca.tes_signal2image_fp(tes_fringes_signal[:,0])
-imshow(img)
+plt.figure()
+plt.imshow(img)
+plt.show();
+
 ```
 
 ## The power in the focal plane with optical aberrations
@@ -121,9 +132,11 @@ Using Creidhe simulations (need to download the files)
 
 ```{python}
 # Path to the simulated files 
-rep = '/home/louisemousset/QUBIC/Qubic_work/Calibration/RF_switch/simu_creidhe_aberrations/'
+#rep = '/home/louisemousset/QUBIC/Qubic_work/Calibration/RF_switch/simu_creidhe_aberrations/'
+rep = '/home/james/MODALfiles/'
 
-int, int_fp = ca.get_power_fp_aberration(rep)
+#int, int_fp = ca.get_power_fp_aberration(rep)
+int, int_fp = ca.get_power_fp_aberration(rep, indep_config=np.arange(1, 65, 1))
 ```
 
 ```{python}
@@ -134,7 +147,9 @@ int_fp.shape
 
 ```{python}
 int_quarter_fp = ca.full2quarter(int_fp)
-imshow(int_quarter_fp)
+plt.figure()
+plt.imshow(int_quarter_fp)
+plt.show()
 ```
 
 ### I want the signal for each TES with the real indices 
@@ -157,6 +172,85 @@ sb = ca.get_synthetic_beam_sky(q, s, 34, default_open=True)
 ```{python}
 # The synthetic beam optained has a value for each pixel on the sky. You should use Healpy if you want to plot it.
 sb.shape
+```
+
+This section now takes synth beam centroids and fits gaussians
+
+```{python}
+from scipy import optimize
+from scipy.interpolate import interp1d
+
+def gaussian(x, amp, x0, width):
+    model = amp*np.exp(-(x-x0)**2 / (2.*width**2))
+    return model
+```
+
+```{python}
+#set up data
+ydata = int_fp[16,13:21]
+print ydata.shape
+xdata = np.linspace(12, 21, 8)
+print xdata.shape
+#interp data
+x2data = np.linspace(12, 21, 100)
+newdata = interp1d(x=xdata, y=ydata, kind='cubic')
+y2data= newdata(x2data)
+#fit gaussian to data
+popt, pcov = optimize.curve_fit(gaussian, ydata, xdata, p0=(2.5e7, 16.5, 1))
+popt, pcov = optimize.curve_fit(gaussian, y2data, x2data, p0=(2.5e7, 16.5, 1))
+
+print int_fp[12:21,13:21].shape
+print(popt)
+print(pcov)
+#plot data and gaussian fits
+plt.figure()
+plt.imshow(int_fp[12:21,13:21])
+plt.show()
+
+plt.figure()
+plt.plot(xdata, ydata, 'b', marker='.', label='data')
+plt.plot(xdata, gaussian(xdata, *popt), 'r', marker='.', label='fit')
+plt.plot(x2data, gaussian(x2data, *popt), 'g', marker='.', label='fit2')
+plt.legend()
+```
+
+```{python}
+plt.figure()
+f, axarr = plt.subplots(1, 2)
+axarr[0].imshow(int_fp)
+axarr[1].imshow(int_fp[20:29,2:11])
+plt.show()
+print "max main, ", np.max(int_fp)
+print "max BL, ", np.max(int_fp[20:29,2:11])
+print "0-0 val", int_fp[20,2], "BR val", int_fp[29,11]
+diagdata = int_fp[20:29,2:11].diagonal()
+print "diagonal, ",  diagdata
+print "top row, ", int_fp[20,2:11]
+print "bottomr row", int_fp[28,2:11]
+print "len diag", len(diagdata)
+```
+
+```{python}
+xdata = np.linspace(0, len(diagdata), len(diagdata))
+
+#interp data
+x2data = np.linspace(0, len(diagdata), len(diagdata)*3)
+newdata = interp1d(x=xdata, y=diagdata, kind='cubic')
+y2data= newdata(x2data)
+
+#fit gaussian to data
+popt, pcov = optimize.curve_fit(gaussian, diagdata, xdata, p0=(0.7e7, 4.5, 0.7))
+popt, pcov = optimize.curve_fit(gaussian, y2data, x2data, p0=(0.7e7, 4.5, 0.7))
+
+print(popt)
+print(pcov)
+#plot data and gaussian fits
+
+plt.figure()
+plt.plot(xdata, diagdata, 'b', marker='.', label='data')
+plt.plot(xdata, gaussian(xdata, *popt), 'r', marker='.', label='fit')
+plt.plot(x2data, gaussian(x2data, *popt), 'g', marker='.', label='fit2')
+plt.legend()
 ```
 
 ```{python}
