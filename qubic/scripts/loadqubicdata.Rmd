@@ -26,11 +26,27 @@ a.hk.keys()
 ```{python}
 from qubicpack.qubicfp import qubicfp
 a = qubicfp()
-a.read_qubicstudio_dataset('/home/james/TDCalibData/Calib-TD/2019-05-27/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0', asic=1)
+#a.read_qubicstudio_dataset('/home/james/TDCalibData/Calib-TD/2019-05-27/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0', asic=1)
+#a.read_qubicstudio_dataset('/home/james/TDCalibData/Calib-TD/2019-05-27-redu/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0/')
+a.read_qubicstudio_dataset('/home/james/TDCalibData/Calib-TD/2019-05-27-redu500000/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0/')
+#a.plot_timeline_focalplane()
 ```
 
 ```{python}
 a.plot_timeline_focalplane()
+```
+
+```{python}
+
+a.plot_timeline(95,1)
+a.plot_timeline(94,1)
+a.plot_timeline(93,1)
+a.plot_timeline(69,1)
+a.hk.keys()
+#a.sample_period(asic=1)
+#a.plot_iv(93,1)
+#a.infotext()
+#a.plot_iv_focalplane()
 ```
 
 ```{python}
@@ -121,6 +137,14 @@ hdul.writeto('temptest.fits')
 ```{python}
 hdult = fits.open('temptest.fits')
 hdult.info()
+```
+
+```{python}
+from qubicpack import qubicpack
+q = qubicpack()
+q.read_qubicstudio_dataset('/home/james/TDCalibData/Calib-TD/2019-05-27-redu10000/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0/')
+q.is_good_iv(93)
+q.adu()
 ```
 
 ```{python}

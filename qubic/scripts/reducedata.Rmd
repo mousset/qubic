@@ -13,24 +13,7 @@ jupyter:
 ---
 
 ```{python}
-from astropy.io import fits
-import matplotlib.pyplot as plt
 
-#load qubic science file
-#hdul = fits.open('/home/james/TDCalibData/Calib-TD/2019-05-27/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0/Sums/science-asic1-2019.05.27.184654.fits', memmap=True)
-hdul = fits.open('/home/james/TDCalibData/Calib-TD/2019-05-27/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0/Sums/science-asic2-2019.05.27.184654.fits', memmap=True)
-
-#select TOD data for reduction
-data = hdul[1].data
-
-print data.shape
-data = data[0:500]
-print data.shape
-hdul[1].data = data
-#plot reduced data
-plt.plot(data['GPSDate'], data['pixel93'], 'o-')
-#write data to new file
-hdul.writeto('temptestasic2.fits', overwrite=True)
 
 #hdunew=fits.PrimaryHDU(data)
 #hdulnew=fits.HDUList([hdunew])
@@ -51,34 +34,25 @@ hdult[1].header
 ```
 
 ```{python}
-from qubicpack.qubicfp import qubicfp
-a = qubicfp()
-a.read_qubicstudio_dataset('/home/james/TDCalibData/Calib-TD/2019-05-27-redu/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0/')
-#a.read_qubicstudio_dataset('/home/james/TDCalibData/Calib-TD/2019-05-27/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0/')
-
-a.hk.keys()
-a.plot_timeline_focalplane()
-```
-
-```{python}
 #a.plot_timeline(93,1)
 #a.timeline_array(asic=1)
 #print a.asic_list[0].is_good_iv()
 import numpy as np
 print "pixel vals", a.asic_list[0].adu
 #print "vbias vals", a.asic_list[0].vbias
-print a.asic_list[0].adu.shape
-pixlen = len(a.asic_list[0].adu[:,0])
-print pixlen
+#print a.asic_list[0].adu.shape
+#pixlen = len(a.asic_list[0].adu[:,0])
+#print pixlen
 
-marr = np.empty(pixlen)
-for pix in range(pixlen):
-    marr = np.append(marr, np.mean(a.asic_list[0].adu[pix,:]))
-print marr
+#marr = np.empty(pixlen)
+#for pix in range(pixlen):
+    #marr = np.append(marr, np.mean(a.asic_list[0].adu[pix,:]))
+#print marr
 
 from qubicpack.plot_fp import plot_fp
 args={}
 args['ASIC1']=a.asic_list[0].adu
+#args['ASIC1']=a.timeline_array
 args['ASIC1 bg']=a.asic_list[0].turnover()
 args['ASIC1 good']=a.asic_list[0].is_good_iv()
 args['ASIC1 x-axis']=a.asic_list[0].vbias
@@ -87,15 +61,69 @@ args['ASIC2 bg']=a.asic_list[1].turnover()
 args['ASIC2 good']=a.asic_list[1].is_good_iv()
 args['ASIC2 x-axis']=a.asic_list[1].vbias
 
-#plot_fp(args)
+plot_fp(args)
 
+#print a.asic_list[0].adu.shape
 ```
 
 ```{python}
-from qubicpack.pix2tes import tes2pix, assign_pix2tes
-tes2pix(93,1)
-pix2tes(93,1)
-assign_pix2tes()
+from astropy.io import fits
+import matplotlib.pyplot as plt
+
+def reduce_qubic_dataset(qfitsfile, outfile, startpoint, finishpoint):
+    #load qubic science file
+    print('loading and reducing {}'.format(qfitsfile))
+    hdul = fits.open(qfitsfile, memmap=True)
+
+    #select TOD data for reduction
+    data = hdul[1].data
+
+    print("starting data shape {}".format(data.shape))
+    data = data[startpoint:finishpoint]
+    print("final data shape {}".format(data.shape))
+    hdul[1].data = data
+    #plot reduced data
+    plt.plot(data['GPSDate'], data['pixel93'], 'o-')
+    plt.title('sample of reduced data for TES 93')
+    #write data to new file
+    hdul.writeto(outfile, overwrite=True)
+    print('reduced file saved here: {}'.format(outfile))
+    print('you should now copy the reduced fits files for asic 1&2 into a directory with correct structure with RAWS, HKS, SUMS. The 2 science files should have correct names too to load asic data properly')
+    
+    return
+```
+
+```{python}
+qfitsfile = '/home/james/TDCalibData/Calib-TD/2019-05-27/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0/Sums/science-asic1-2019.05.27.184654.fits'
+outfile = '/home/james/TDCalibData/Calib-TD/2019-05-27-reduced-files/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0/Sums/science-asic1-2019.05.27.184654.fits'
+startpoint = 0
+finishpoint = 10000
+reduce_qubic_dataset(qfitsfile, outfile, startpoint, finishpoint)
+```
+
+```{python}
+#test reduced dataset
+from qubicpack.qubicfp import qubicfp
+a = qubicfp()
+a.read_qubicstudio_dataset('/home/james/TDCalibData/Calib-TD/2019-05-27-reduced-files/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0/')
+
+a.hk.keys()
+a.plot_timeline(93,1)
+```
+
+```{python}
+
+a.plot_timeline(93,1)
+```
+
+```{python}
+from qubicpack.reduce_dataset import reduce_qubic_dataset
+qfitsfile = '/home/james/TDCalibData/Calib-TD/2019-05-27/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0/Sums/science-asic1-2019.05.27.184654.fits'
+outfile = '/home/james/TDCalibData/Calib-TD/2019-05-27-reduced-files/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0/Sums/science-asic1-2019.05.27.184654.fits'
+startpoint = 0
+finishpoint = 10000
+reduce_qubic_dataset(qfitsfile, outfile, startpoint, finishpoint)
+
 ```
 
 ```{python}

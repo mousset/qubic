@@ -1,0 +1,256 @@
+---
+jupyter:
+  jupytext:
+    text_representation:
+      extension: .Rmd
+      format_name: rmarkdown
+      format_version: '1.1'
+      jupytext_version: 1.1.5
+  kernelspec:
+    display_name: Python 2
+    language: python
+    name: python2
+---
+
+```{python}
+from qubicpack import qubicpack
+import numpy as np
+q = qubicpack()
+q.read_qubicstudio_dataset('/home/james/TDCalibData/Calib-TD/2019-05-27-redu10000/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0/')
+# timeline = q.timeline(129)
+# current= q.ADU2I(timeline) # uAmps
+# print current.shape
+
+# print q.timeline_array(timeline_index=1).shape
+
+npix = q.NPIXELS*2
+pixarr = np.array([])
+
+for pix in range(npix):
+
+    timeline = q.timeline(pix+1)
+    print pix+1
+    current= q.ADU2I(timeline)
+    mcurr = np.mean(current)
+    pixarr = np.append(pixarr, mcurr)
+print pixarr.shape
+
+```
+
+```{python}
+from qubicpack.qubicfp import qubicfp
+import numpy as np
+from qubicpack import qubicpack
+q = qubicpack()
+a = qubicfp()
+a.read_qubicstudio_dataset('/home/james/TDCalibData/Calib-TD/2019-05-27-redu500000/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0/')
+
+```
+
+```{python}
+timeline = a.timeline_array(asic=1)
+print timeline.shape
+nasic = 2
+
+npix = len(a.timeline_array(asic=0)[:,0])
+pixarr = np.array([])
+
+for asic in range(nasic):
+    print "ASIC NUMBER", asic
+    
+    for pix in range(npix):
+        timeline = a.timeline_array(asic=asic)[pix,:]
+        meancurrent = np.mean(q.ADU2I(timeline))
+        pixarr = np.append(pixarr, meancurrent)
+
+print pixarr.shape
+```
+
+```{python}
+from qubicpack import pix2tes, TES_parameters_table
+import sys
+sys.path.append('/home/james/eclipse-workspace/qubiclmou2/qubic/')
+import qubic
+import matplotlib.pyplot as plt
+pix2tes.pix2tes(235,1)
+basedir = '/home/james/eclipse-workspace/qubiclmou2/'
+dictfilename = basedir + '/qubic/qubic/scripts/global_source.dict'
+d = qubic.qubicdict.qubicDict()
+d.read_from_file(dictfilename)
+b = qubic.QubicMultibandInstrument(d)
+vtxs = b[0].detector.vertex
+print vtxs.shape
+PixCenX = np.array([])
+PixCenY = np.array([])
+for i in vtxs:
+
+    x1 = i[0,0]
+    y1 = i[0,1]
+    x2 = i[2,0]
+    y2 = i[2,1]
+    pixcenx = (x1 + x2) / 2
+    pixceny = (y1 + y2) / 2
+    PixCenX = np.append(PixCenX,pixcenx)
+    PixCenY = np.append(PixCenY,pixceny)
+    
+print PixCenX.shape, PixCenX.shape
+print pixarr.shape
+
+print pix2tes.assign_pix_grid().shape
+
+plt.figure()
+plt.scatter(PixCenX*1000,PixCenY*1000, c=abs(pixarr[0:248]), cmap='jet',marker='s')
+plt.subplots_adjust(bottom=0.1, right=0.8, top=0.9)
+cax = plt.axes([0.85, 0.1, 0.05, 0.8])
+plt.colorbar(cax=cax,label="Current (microA)")
+plt.show()
+```
+
+```{python}
+#print vtxs.shape
+from qubicpack.utilities import TES_index
+from qubicpack.pix2tes import TES2PIX, assign_pix_grid
+idx = pix2tes.assign_pix_grid()
+#print idx
+#pixarr[0:248] = pixarr[idx]
+#TES_translation_table = TES2PIX
+#print TES_translation_table
+#a.plot_timeline_focalplane(pixarr[0:248])
+pix_grid = assign_pix_grid()
+print pix_grid.shape, pix_grid
+nrows = pix_grid.shape[0]
+ncols = pix_grid.shape[1]
+```
+
+```{python}
+from qubicpack.pix2tes import tes2pix, assign_pix2tes, TES2PIX, assign_pix_grid, pix2tes
+
+tes2pix(93,1)
+pix2tes(93,1)
+#assign_pix2tes()
+arr = assign_pix_grid()
+arr = np.reshape(arr, 289)
+print arr.shape, arr
+print assign_pix2tes()
+#TES2PIX()
+```
+
+```{python}
+from qubicpack.qubicfp import qubicfp
+import numpy as np
+from qubicpack import qubicpack
+q = qubicpack()
+a = qubicfp()
+a.read_qubicstudio_dataset('/home/james/TDCalibData/Calib-TD/2019-05-27-redu500000/2019-05-27_18.46.54__Fibers_Amp_0.5_V_mod_1_Hz_Duty_0.3_duration_43200.0_sec_index_0/')
+a.hk.keys()
+```
+
+```{python}
+import sys
+sys.path.append('/home/james/eclipse-workspace/qubiclmou2/qubic/')
+import qubic
+import matplotlib.pyplot as plt
+
+basedir = '/home/james/eclipse-workspace/qubiclmou2/'
+dictfilename = basedir + '/qubic/qubic/scripts/global_source.dict'
+d = qubic.qubicdict.qubicDict()
+d.read_from_file(dictfilename)
+b = qubic.QubicMultibandInstrument(d)
+vtxs = b[0].detector.vertex
+#print abs(vtxs[0])
+vtxs = abs(vtxs)
+x1 = vtxs[0,0,1]
+x2 = vtxs[0,2,1]
+y1 = vtxs[0,1,0]
+y2 = vtxs[0,0,0]
+#print x1, x2, y1, y2
+
+xcens = np.array([])
+ycens = np.array([])
+asicarr = np.array([])
+pixidx = np.array([])
+meancurr = np.array([])
+
+npts = len(vtxs[:,0,0])
+
+#timeline = a.timeline_array(asic=0).shape
+#print timeline
+#loop over index for each pix
+for n in range(npts):
+    #vtxs appears to have grid ordering correct, and find pix centre
+    x1 = vtxs[n,0,1]
+    x2 = vtxs[n,2,1]
+    y1 = vtxs[n,1,0]
+    y2 = vtxs[n,0,0]
+    xcen = (x1 + x2) / 2
+    ycen = (y1 + y2) / 2
+    #for first asic, load timeline
+    if n<=127:
+        asic=0
+        timeline = a.timeline_array(asic=asic)[n,:]
+    else:
+        asic=1
+        m = n-128
+        timeline = a.timeline_array(asic=asic)[m,:]
+    
+    #meancurrent = np.mean(q.ADU2I(timeline))
+    meancurr = np.append(meancurr, np.mean(q.ADU2I(timeline)))
+    xcens = np.append(xcens, xcen)
+    ycens = np.append(ycens, ycen)
+    asicarr = np.append(asicarr, asic)
+    pixidx = np.append(pixidx, n)
+    
+    #print xcen, ycen, asic, n, meancurrent
+
+print xcens.shape, ycens.shape, meancurr.shape
+# plt.figure()
+# plt.scatter(pixcens*1000,ycens*1000, c=meancurr, cmap='jet',marker='s')
+# plt.subplots_adjust(bottom=0.1, right=0.8, top=0.9)
+# cax = plt.axes([0.85, 0.1, 0.05, 0.8])
+# plt.colorbar(cax=cax,label="Current (microA)")
+# plt.show()    
+```
+
+```{python}
+# %%capture
+from qubicpack.pix2tes import tes2pix, assign_pix2tes, TES2PIX, assign_pix_grid, pix2tes
+meancurr = abs(meancurr)
+for i, curr in enumerate(meancurr):
+    #print i, curr
+    if curr > 2:
+        meancurr[i] = 0
+    #print meancurr[i]
+#print type(str(pixidx)), str(pixidx)
+# %matplotlib qt
+plt.figure()
+plt.scatter(xcens*1000,ycens*1000, c=meancurr, cmap='jet',marker='s')
+
+#use hack logic with pix2tes to find out if asic corresponds to pix value
+for n in range(npts):
+    asic=2
+    if pix2tes(n+1, asic=asic) is None:
+        asic=1       
+    plt.text(xcens[n]*1000, ycens[n]*1000, str(pix2tes(n+1,asic=asic)))
+    
+plt.subplots_adjust(bottom=0.1, right=0.8, top=0.9)
+cax = plt.axes([0.85, 0.1, 0.05, 0.8])
+plt.colorbar(cax=cax,label=" Mean Current (microA)")
+plt.show()
+```
+
+```{python}
+from qubicpack.pix2tes import tes2pix, assign_pix2tes, TES2PIX, assign_pix_grid, pix2tes
+
+#print assign_pix_grid()
+asictrue = pix2tes(95,2);
+if asictrue is None:
+    print "asic incorrect", asictrue
+```
+
+```{python}
+plt.close('all')
+```
+
+```{python}
+
+```
